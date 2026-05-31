@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAVID.EXE | END</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: "Courier New", monospace;
+      user-select: none;
+    }
+
+    body {
+      cursor: none;
+    }
+
+    .staticField {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 19%),
+        repeating-linear-gradient(to bottom, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 2px, transparent 6px),
+        #000;
+      opacity: 0.82;
+    }
+
+    .questionCore {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 20;
+      transform: translate(-50%, -50%);
+      border: 0;
+      background: transparent;
+      color: #fff;
+      font-family: "OCR A Extended", "Consolas", "Courier New", monospace;
+      font-size: clamp(170px, 28vw, 420px);
+      line-height: 0.82;
+      cursor: pointer;
+      text-shadow:
+        0 0 18px rgba(255,255,255,0.82),
+        6px 0 rgba(255,0,0,0.34),
+        -6px 0 rgba(0,180,255,0.34);
+      animation: questionPulse 3.2s ease-in-out infinite;
+    }
+
+    .choicePanel {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 25;
+      width: min(380px, calc(100vw - 56px));
+      display: grid;
+      gap: 10px;
+    }
+
+    .choicePanel button {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.82);
+      background: rgba(0,0,0,0.76);
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      padding: 12px 14px;
+      cursor: pointer;
+      text-align: left;
+      text-shadow: 2px 0 rgba(255,0,0,0.25), -2px 0 rgba(0,180,255,0.25);
+    }
+
+    .choicePanel button:hover {
+      background: #fff;
+      color: #000;
+      text-shadow: none;
+    }
+
+    .glitchLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        linear-gradient(90deg, rgba(255,0,0,0.2), transparent 12%, rgba(0,180,255,0.22) 25%, transparent 40%),
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 9px, rgba(255,255,255,0.24) 10px);
+    }
+
+    .glitchLayer.active {
+      animation: glitchFlash 0.28s steps(2) 1;
+    }
+
+    body.failJump .questionCore {
+      animation: questionFailJump 0.32s steps(2) 1;
+    }
+
+    body.failJump .choicePanel {
+      animation: panelFailJump 0.32s steps(2) 1;
+    }
+
+    @keyframes questionPulse {
+      0%, 100% { opacity: 0.92; filter: none; }
+      50% { opacity: 1; filter: contrast(1.45); }
+    }
+
+    @keyframes glitchFlash {
+      0% { opacity: 0; transform: translate(0, 0); }
+      24% { opacity: 0.9; transform: translate(13px, -5px); }
+      52% { opacity: 0.35; transform: translate(-11px, 4px); }
+      78% { opacity: 0.7; transform: translate(6px, 1px); }
+      100% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    @keyframes questionFailJump {
+      0% { transform: translate(-50%, -50%); filter: none; }
+      20% { transform: translate(calc(-50% - 16px), calc(-50% + 5px)); filter: invert(1); }
+      48% { transform: translate(calc(-50% + 13px), calc(-50% - 4px)); filter: contrast(1.8); }
+      76% { transform: translate(calc(-50% - 7px), calc(-50% - 2px)); filter: none; }
+      100% { transform: translate(-50%, -50%); filter: none; }
+    }
+
+    @keyframes panelFailJump {
+      0% { transform: translate(0, 0); filter: none; }
+      20% { transform: translate(-16px, 5px); filter: invert(1); }
+      48% { transform: translate(13px, -4px); filter: contrast(1.8); }
+      76% { transform: translate(-7px, -2px); filter: none; }
+      100% { transform: translate(0, 0); filter: none; }
+    }
+
+    @media (max-width: 760px) {
+      .choicePanel {
+        left: 18px;
+        right: 18px;
+        bottom: 22px;
+        width: auto;
+      }
+    }
+  </style>
+
+  <link rel="stylesheet" href="./eye-transition.css" />
+  <link rel="stylesheet" href="./custom-cursor.css" />
+</head>
+<body>
+  <div class="staticField"></div>
+  <button class="questionCore" id="questionCore" type="button" aria-label="End question">?</button>
+
+  <div class="choicePanel" id="choicePanel">
+    <button type="button">SWEET DREAMS</button>
+    <button type="button">NIGHTMARES</button>
+    <button type="button">I DO NOT REMEMBER</button>
+  </div>
+
+  <div class="glitchLayer" id="glitchLayer"></div>
+
+  <script src="./eye-transition.js"></script>
+  <script src="./david-voice.js"></script>
+  <script>
+    const questionCore = document.getElementById('questionCore');
+    const choicePanel = document.getElementById('choicePanel');
+    const glitchLayer = document.getElementById('glitchLayer');
+
+    function triggerGlitch() {
+      glitchLayer.classList.remove('active');
+      void glitchLayer.offsetWidth;
+      glitchLayer.classList.add('active');
+      if (window.DAVIDVoice) window.DAVIDVoice.buzz(0.26, 0.012, 136);
+    }
+
+    function failJump() {
+      triggerGlitch();
+      document.body.classList.remove('failJump');
+      void document.body.offsetWidth;
+      document.body.classList.add('failJump');
+      setTimeout(() => document.body.classList.remove('failJump'), 340);
+    }
+
+    choicePanel.addEventListener('click', (event) => {
+      if (!event.target.closest('button')) return;
+      failJump();
+    });
+
+    questionCore.addEventListener('click', () => {
+      triggerGlitch();
+      if (window.goWithEyeTransition) {
+        window.goWithEyeTransition('final-question.html');
+      } else {
+        window.location.href = 'final-question.html';
+      }
+    });
+  </script>
+  <script src="./custom-cursor.js"></script>
+</body>
+</html>

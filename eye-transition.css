@@ -1,0 +1,53 @@
+/* DAVID.EXE shared eye transition
+   Put this file in the same folder as your HTML files.
+*/
+
+html:not(.eye-transition-ready) body:not([data-eye-mode="close-only"]) {
+  background: #000;
+}
+
+html:not(.eye-transition-ready) body:not([data-eye-mode="close-only"]) > * {
+  visibility: hidden;
+}
+
+#eyeTransition {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#eyeTransition .eye-lid {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: #000;
+  transform: translateY(0);
+  transition: transform 0.85s cubic-bezier(.76, 0, .24, 1);
+  will-change: transform;
+}
+
+#eyeTransition .eye-lid.top {
+  top: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.16);
+}
+
+#eyeTransition .eye-lid.bottom {
+  bottom: 0;
+  border-top: 1px solid rgba(255,255,255,0.16);
+}
+
+#eyeTransition.open .eye-lid.top {
+  transform: translateY(-100%);
+}
+
+#eyeTransition.open .eye-lid.bottom {
+  transform: translateY(100%);
+}
+
+#eyeTransition.closing .eye-lid.top,
+#eyeTransition.closing .eye-lid.bottom {
+  transform: translateY(0);
+}

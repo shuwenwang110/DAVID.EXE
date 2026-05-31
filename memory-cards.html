@@ -1,0 +1,789 @@
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAVID.EXE | Memory Cards</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: "Courier New", monospace;
+      user-select: none;
+      cursor: crosshair;
+    }
+
+    #bgVideo {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0.7;
+      filter: grayscale(1) contrast(1.35) brightness(0.55);
+    }
+
+    #desktopTint {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background:
+        radial-gradient(circle at center, rgba(0,0,0,0.15), rgba(0,0,0,0.72)),
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.04) 0px,
+          rgba(255,255,255,0.04) 1px,
+          transparent 2px,
+          transparent 5px
+        );
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08), transparent 2px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.06), transparent 2px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.05), transparent 1px);
+      background-size: 90px 90px, 130px 130px, 70px 70px;
+      opacity: 0.35;
+      animation: noiseDrift 0.38s steps(2) infinite;
+      z-index: 50;
+    }
+
+    @keyframes noiseDrift {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-8px, 4px); }
+      50% { transform: translate(5px, -6px); }
+      75% { transform: translate(10px, 2px); }
+      100% { transform: translate(-4px, 8px); }
+    }
+
+    #desktop {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 2;
+    }
+
+    #gameWindow {
+      position: absolute;
+      left: auto;
+      right: 4vw;
+      top: 50%;
+      transform: translateY(-50%);
+      width: min(clamp(420px, 50vw, 760px), calc(100vw - 48px));
+      aspect-ratio: 4 / 3;
+      height: auto;
+      min-width: 0;
+      min-height: 0;
+      max-height: calc(100vh - 48px);
+      border: 1px solid rgba(255,255,255,0.9);
+      background: #000;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.95),
+        0 0 42px rgba(255,255,255,0.16),
+        12px 16px 0 rgba(0,0,0,0.45);
+      z-index: 10;
+    }
+
+    #titleBar {
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.86);
+      background: linear-gradient(to right, #111, #050505);
+      padding: 0 10px;
+      cursor: default;
+      text-shadow: 2px 0 rgba(255,0,0,0.35), -2px 0 rgba(0,180,255,0.35);
+    }
+
+    #titleBar:active { cursor: default; }
+
+    .windowTitle {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+    }
+
+    #windowContent {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 34px);
+      overflow: hidden;
+      background: radial-gradient(circle at center, #111 0%, #030303 44%, #000 100%);
+    }
+
+    #windowContent::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.04) 0px,
+          rgba(255,255,255,0.04) 1px,
+          transparent 2px,
+          transparent 5px
+        );
+      opacity: 0.55;
+      z-index: 25;
+    }
+
+    .topHud {
+      display: none;
+    }
+
+    .statusBox {
+      opacity: 0.9;
+    }
+
+    .cardsWrap {
+      position: absolute;
+      /* Fill the simulated window instead of sitting as a small block near the lower centre. */
+      inset: clamp(20px, 5%, 42px);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: repeat(3, minmax(0, 1fr));
+      gap: clamp(7px, 1.4vw, 16px);
+      z-index: 12;
+    }
+
+    .card {
+      display: block;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.85);
+      background: #030303;
+      color: #fff;
+      font-family: inherit;
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.32s ease, opacity 0.28s ease, filter 0.2s ease;
+      box-shadow: 0 0 14px rgba(255,255,255,0.06);
+    }
+
+    .card:hover {
+      filter: brightness(1.18);
+      box-shadow: 0 0 18px rgba(255,255,255,0.14);
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card.matched {
+      opacity: 0.35;
+      pointer-events: none;
+      filter: grayscale(1);
+    }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 7px;
+      backface-visibility: hidden;
+      padding: 8px;
+    }
+
+    .front {
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.06), transparent 38%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 1px, transparent 1px, transparent 9px),
+        #020202;
+    }
+
+    .front::after {
+      content: "";
+    }
+
+    .back {
+      transform: rotateY(180deg);
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 35%),
+        #000;
+    }
+
+    .symbol {
+      font-size: clamp(36px, 7.2vmin, 76px);
+      line-height: 1;
+      filter: grayscale(1);
+    }
+
+    .label {
+      font-size: clamp(8px, 1.25vmin, 11px);
+      letter-spacing: 0.14em;
+      opacity: 0.78;
+      text-align: center;
+    }
+
+    .dialogue {
+      position: fixed;
+      left: auto;
+      bottom: 22px;
+      transform: none;
+      z-index: 1000;
+      width: min(430px, calc(100vw - 48px));
+      min-height: 70px;
+      border: 1px solid rgba(255,255,255,0.8);
+      background: rgba(0,0,0,0.76);
+      padding: 12px 15px;
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 0 22px rgba(255,255,255,0.12);
+      text-shadow: 2px 0 rgba(255,0,0,0.24), -2px 0 rgba(0,180,255,0.24);
+      /* Keep DAVID outside any shaking/transformed game layers. */
+    }
+
+    .speaker {
+      opacity: 0.68;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      margin-bottom: 4px;
+    }
+
+    .centerPanel {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 40;
+      background: rgba(0,0,0,0.88);
+      padding: 24px;
+    }
+
+    .panelBox {
+      width: min(520px, 92%);
+      border: 1px solid #fff;
+      background: #030303;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(255,255,255,0.1);
+      text-shadow: 2px 0 rgba(255,0,0,0.28), -2px 0 rgba(0,180,255,0.28);
+    }
+
+    .panelBox h2 {
+      margin: 0 0 16px;
+      font-size: 26px;
+      letter-spacing: 0.14em;
+      font-weight: normal;
+    }
+
+    .panelBox p {
+      margin: 10px 0;
+      font-size: 13px;
+      line-height: 1.7;
+      opacity: 0.86;
+    }
+
+    button,
+    .linkButton {
+      display: inline-block;
+      margin-top: 22px;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      padding: 12px 28px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    button:hover,
+    .linkButton:hover {
+      background: #fff;
+      color: #000;
+      text-shadow: none;
+    }
+
+    .hidden { display: none; }
+
+    .faceFlash {
+      position: absolute;
+      inset: 0;
+      z-index: 32;
+      pointer-events: none;
+      opacity: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.05);
+      mix-blend-mode: screen;
+    }
+
+    .faceFlash.active {
+      animation: faceBlink 0.28s steps(2) 1;
+    }
+
+    .faceGhost {
+      width: min(190px, 32vmin, 42%);
+      aspect-ratio: 1 / 1;
+      height: auto;
+      border: 1px solid rgba(255,255,255,0.7);
+      border-radius: 50%;
+      position: relative;
+      filter: blur(0.2px);
+      opacity: 0.78;
+    }
+
+    .faceGhost::before,
+    .faceGhost::after {
+      content: "";
+      position: absolute;
+      top: 34%;
+      width: 11%;
+      height: 22%;
+      border: 1px solid rgba(255,255,255,0.85);
+      border-radius: 50%;
+      background: #000;
+    }
+
+    .faceGhost::before { left: 29%; }
+    .faceGhost::after { right: 29%; }
+
+    .ghostMouth {
+      position: absolute;
+      left: 50%;
+      top: 68%;
+      width: 28%;
+      height: 5%;
+      border: 1px solid #fff;
+      transform: translateX(-50%);
+    }
+
+    @keyframes faceBlink {
+      0% { opacity: 0; transform: translate(0, 0); }
+      20% { opacity: 0.82; transform: translate(7px, -2px); }
+      50% { opacity: 0.2; transform: translate(-9px, 3px); }
+      70% { opacity: 0.68; transform: translate(4px, 1px); }
+      100% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    .glitchLayer {
+      position: absolute;
+      inset: 0;
+      z-index: 31;
+      pointer-events: none;
+      opacity: 0;
+      background:
+        linear-gradient(90deg, rgba(255,0,0,0.18), transparent 10%, rgba(0,180,255,0.16) 18%, transparent 26%),
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 11px, rgba(255,255,255,0.18) 12px);
+    }
+
+    .glitchLayer.active {
+      animation: glitchFlash 0.22s steps(2) 1;
+    }
+
+    @keyframes glitchFlash {
+      0% { opacity: 0; transform: translate(0, 0); }
+      20% { opacity: 0.68; transform: translate(7px, -2px); }
+      45% { opacity: 0.28; transform: translate(-10px, 3px); }
+      70% { opacity: 0.52; transform: translate(5px, 1px); }
+      100% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    .shake {
+      animation: boxShake 0.2s steps(2) 1;
+    }
+
+    @keyframes boxShake {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(2.5px, -1px); }
+      50% { transform: translate(-3px, 1px); }
+      75% { transform: translate(2px, 0.5px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .fadeOut {
+      animation: fadeOut 0.5s forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: scale(1.02); }
+    }
+
+    @media (max-width: 900px) {
+      #gameWindow {
+        width: 86vw;
+        min-width: 0;
+        min-height: 0;
+        left: auto;
+        right: 7vw;
+        top: 50%;
+        aspect-ratio: 4 / 3;
+        height: auto;
+      }
+
+      .cardsWrap {
+        inset: clamp(14px, 4%, 26px);
+        gap: clamp(5px, 1.6vw, 10px);
+      }
+    }
+  </style>
+
+  <!-- Shared DAVID.EXE transition and cursor files -->
+  <link rel="stylesheet" href="./eye-transition.css" />
+  <link rel="stylesheet" href="./custom-cursor.css" />
+  <link rel="stylesheet" href="./david-companion.css" />
+</head>
+<body>
+  <!-- Browser background video placeholder.
+       Put your looping video here:
+       project-folder/image/21.mp4
+  -->
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="./image/21.mp4" type="video/mp4" />
+  </video>
+  <div id="desktopTint"></div>
+
+  <div id="desktop">
+    <div id="gameWindow">
+      <div id="titleBar">
+        <div class="windowTitle">DAVID.EXE / MEMORY_REPAIR.exe</div>
+      </div>
+
+      <div id="windowContent">
+        <div class="topHud">
+          <div class="statusBox">
+            &gt; MEMORY CARDS<br />
+            &gt; FIND THE WAY BACK
+          </div>
+          <div class="statusBox">
+            MOVES: <span id="movesText">0</span><br />
+            MATCHED: <span id="matchedText">0</span> / 6
+          </div>
+        </div>
+
+        <div class="cardsWrap" id="cardsWrap"></div>
+
+        <div id="startPanel" class="centerPanel">
+          <div class="panelBox">
+            <h2>MEMORY REPAIR</h2>
+            <p>Flip two cards at a time. Match the symbols: eye, door, moon, VHS tape, mouth, and hourglass.</p>
+            <p>If you choose the wrong pair, a face may briefly appear. Please ignore it.</p>
+            <button id="startBtn">START RECALL</button>
+          </div>
+        </div>
+
+        <div id="resultPanel" class="centerPanel hidden">
+          <div class="panelBox">
+            <h2>MEMORY RESTORED</h2>
+            <p>DAVID: That was not easy. Humans seem very good at forgetting.</p>
+            <a id="continueLink" class="linkButton" href="SCENE03.html?from=memory-cards" data-eye-link>CONTINUE</a>
+          </div>
+        </div>
+
+        <div class="faceFlash" id="faceFlash">
+          <div class="faceGhost"><div class="ghostMouth"></div></div>
+        </div>
+        <div class="glitchLayer" id="glitchLayer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAVID dialogue is outside #gameWindow so shake/glitch transforms cannot pull it into the simulated window. -->
+  <div class="davidCompanion" data-david-companion>
+    <canvas class="davidCompanionCanvas"></canvas>
+    <div class="dialogue">
+      <div class="speaker">DAVID</div>
+      <div id="dialogueText">You need to return to the beginning of the dream. I do not have a rewind function, of course.</div>
+    </div>
+  </div>
+
+    <script src="./eye-transition.js"></script>
+  <script src="./image/david-model-data.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="./david-voice.js"></script>
+  <script src="./david-companion.js"></script>
+<script>
+    /*
+      EASY EDIT AREA
+      1) Change NEXT_HTML to the page you want to open after the memory game.
+      2) Make sure your background video is saved as: ./image/21.mp4
+      3) Change CARD_SET if you want different memory symbols.
+    */
+    const NEXT_HTML = 'SCENE03.html?from=memory-cards';
+
+    const CARD_SET = [
+      { id: 'eye', symbol: '👁️', label: 'EYE' },
+      { id: 'door', symbol: '🚪', label: 'DOOR' },
+      { id: 'moon', symbol: '🌙', label: 'MOON' },
+      { id: 'vhs', symbol: '📼', label: 'VHS' },
+      { id: 'mouth', symbol: '👄', label: 'MOUTH' },
+      { id: 'hourglass', symbol: '⌛', label: 'HOURGLASS' }
+    ];
+
+    const gameWindow = document.getElementById('gameWindow');
+    const titleBar = document.getElementById('titleBar');
+    const windowContent = document.getElementById('windowContent');
+    const cardsWrap = document.getElementById('cardsWrap');
+    const movesText = document.getElementById('movesText');
+    const matchedText = document.getElementById('matchedText');
+    const dialogueText = document.getElementById('dialogueText');
+    const startPanel = document.getElementById('startPanel');
+    const resultPanel = document.getElementById('resultPanel');
+    const startBtn = document.getElementById('startBtn');
+    const continueLink = document.getElementById('continueLink');
+    const faceFlash = document.getElementById('faceFlash');
+    const glitchLayer = document.getElementById('glitchLayer');
+
+    continueLink.href = NEXT_HTML;
+
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let moves = 0;
+    let matchedPairs = 0;
+
+    function shuffle(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildDeck() {
+      const doubled = [...CARD_SET, ...CARD_SET].map((card, index) => ({
+        ...card,
+        uniqueId: `${card.id}-${index}`
+      }));
+      return shuffle(doubled);
+    }
+
+    function createCard(cardData) {
+      const card = document.createElement('button');
+      card.className = 'card';
+      card.type = 'button';
+      card.dataset.id = cardData.id;
+      card.dataset.uniqueId = cardData.uniqueId;
+      card.innerHTML = `
+        <div class="face front"></div>
+        <div class="face back">
+          <div class="symbol">${cardData.symbol}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => flipCard(card));
+      return card;
+    }
+
+    function startGame() {
+      firstCard = null;
+      secondCard = null;
+      lockBoard = false;
+      moves = 0;
+      matchedPairs = 0;
+      movesText.textContent = moves;
+      matchedText.textContent = matchedPairs;
+      cardsWrap.innerHTML = '';
+      resultPanel.classList.add('hidden');
+
+      const deck = buildDeck();
+      deck.forEach(cardData => {
+        cardsWrap.appendChild(createCard(cardData));
+      });
+
+      setDialogue('Find the matching fragments. Eye. Door. Moon. VHS. Mouth. Hourglass. Start wherever you like.');
+    }
+
+    function flipCard(card) {
+      if (lockBoard) return;
+      if (card === firstCard) return;
+      if (card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+      softClickSound();
+
+      if (!firstCard) {
+        firstCard = card;
+        return;
+      }
+
+      secondCard = card;
+      moves++;
+      movesText.textContent = moves;
+      checkMatch();
+    }
+
+    function checkMatch() {
+      const isMatch = firstCard.dataset.id === secondCard.dataset.id;
+
+      if (isMatch) {
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+        matchedPairs++;
+        matchedText.textContent = matchedPairs;
+        setDialogue(getMatchLine(firstCard.dataset.id));
+        resetTurn();
+
+        if (matchedPairs === CARD_SET.length) {
+          setTimeout(winGame, 700);
+        }
+      } else {
+        lockBoard = true;
+        setDialogue('That is not where it belongs. Did you see that face too?');
+        triggerWrongPair();
+        setTimeout(() => {
+          firstCard.classList.remove('flipped');
+          secondCard.classList.remove('flipped');
+          resetTurn();
+        }, 850);
+      }
+    }
+
+    function resetTurn() {
+      [firstCard, secondCard] = [null, null];
+      lockBoard = false;
+    }
+
+    function winGame() {
+      setDialogue('That was not easy. Humans seem very good at forgetting.');
+      resultPanel.classList.remove('hidden');
+    }
+
+    function setDialogue(text) {
+      dialogueText.textContent = text;
+    }
+
+    function getMatchLine(id) {
+      const lines = {
+        eye: 'The eye remembers looking before it remembers seeing.',
+        door: 'A door is only useful when something is waiting behind it.',
+        moon: 'The moon keeps appearing. I do not think that belongs to you.',
+        vhs: 'A recording of a recording. How human.',
+        mouth: 'Careful. Some memories speak when they are not invited.',
+        hourglass: 'Time is leaking. That is usually a bad sign.'
+      };
+      return lines[id] || 'Memory fragment repaired.';
+    }
+
+    function triggerWrongPair() {
+      glitchLayer.classList.remove('active');
+      faceFlash.classList.remove('active');
+      windowContent.classList.remove('shake');
+      void glitchLayer.offsetWidth;
+      glitchLayer.classList.add('active');
+      faceFlash.classList.add('active');
+      windowContent.classList.add('shake');
+      if (window.DAVIDVoice) window.DAVIDVoice.buzz(0.24, 0.012, 142);
+      harshNoise();
+    }
+
+    function softClickSound() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audio = new AudioContext();
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(180, audio.currentTime);
+        gain.gain.setValueAtTime(0.035, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.05);
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start();
+        osc.stop(audio.currentTime + 0.05);
+      } catch (error) {
+        return;
+      }
+    }
+
+    function harshNoise() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audio = new AudioContext();
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(70, audio.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(520, audio.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.06, audio.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.14);
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start();
+        osc.stop(audio.currentTime + 0.14);
+      } catch (error) {
+        return;
+      }
+    }
+
+    startBtn.addEventListener('click', () => {
+      startPanel.classList.add('hidden');
+      startGame();
+    });
+
+    continueLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.goWithEyeTransition) {
+        window.goWithEyeTransition(NEXT_HTML);
+        return;
+      }
+      document.body.classList.add('fadeOut');
+      setTimeout(() => {
+        window.location.href = NEXT_HTML;
+      }, 450);
+    });
+
+    let dragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    titleBar.addEventListener('mousedown', (e) => {
+      return;
+      dragging = true;
+      const rect = gameWindow.getBoundingClientRect();
+      dragOffsetX = e.clientX - rect.left;
+      dragOffsetY = e.clientY - rect.top;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const maxX = window.innerWidth - gameWindow.offsetWidth;
+      const maxY = window.innerHeight - gameWindow.offsetHeight;
+      const nextX = Math.max(0, Math.min(maxX, e.clientX - dragOffsetX));
+      const nextY = Math.max(0, Math.min(maxY, e.clientY - dragOffsetY));
+      gameWindow.style.left = nextX + 'px';
+      gameWindow.style.top = nextY + 'px';
+    });
+
+    window.addEventListener('mouseup', () => {
+      dragging = false;
+    });
+
+    window.addEventListener('resize', keepWindowInsideScreen);
+
+    function keepWindowInsideScreen() {
+      return;
+      const rect = gameWindow.getBoundingClientRect();
+      const maxX = window.innerWidth - gameWindow.offsetWidth;
+      const maxY = window.innerHeight - gameWindow.offsetHeight;
+      const nextX = Math.max(0, Math.min(maxX, rect.left));
+      const nextY = Math.max(0, Math.min(maxY, rect.top));
+      gameWindow.style.left = nextX + 'px';
+      gameWindow.style.top = nextY + 'px';
+    }
+  </script>
+  <script src="./custom-cursor.js"></script>
+</body>
+</html>

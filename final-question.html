@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAVID.EXE | END QUESTION</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: "Courier New", monospace;
+      user-select: none;
+    }
+
+    body {
+      cursor: none;
+    }
+
+    .quietStage {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at center, rgba(255,255,255,0.045), transparent 26%),
+        #000;
+    }
+
+    .finalStack {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 20;
+      width: min(520px, calc(100vw - 48px));
+      transform: translate(-50%, -50%);
+      display: grid;
+      gap: 22px;
+      text-align: center;
+    }
+
+    .finalText {
+      display: grid;
+      gap: 12px;
+      font-size: clamp(17px, 2.2vw, 24px);
+      line-height: 1.45;
+      letter-spacing: 0.03em;
+      text-shadow: 0 0 14px rgba(255,255,255,0.26);
+    }
+
+    .finalChoices {
+      display: grid;
+      gap: 10px;
+      width: min(360px, 100%);
+      margin: 8px auto 0;
+    }
+
+    button {
+      width: 100%;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      padding: 13px 15px;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    button:hover {
+      background: #fff;
+      color: #000;
+    }
+
+    .recorded {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 30;
+      transform: translate(-50%, -50%);
+      display: none;
+      font-size: clamp(15px, 2.4vw, 24px);
+      letter-spacing: 0.18em;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow: 0 0 18px rgba(255,255,255,0.38);
+    }
+
+    .recorded.visible {
+      display: block;
+      animation: recordedPulse 3.6s ease-in-out infinite;
+    }
+
+    body.responseMode .finalStack {
+      display: none;
+    }
+
+    @keyframes recordedPulse {
+      0%, 100% { opacity: 0.42; }
+      50% { opacity: 1; }
+    }
+  </style>
+
+  <link rel="stylesheet" href="./eye-transition.css" />
+  <link rel="stylesheet" href="./custom-cursor.css" />
+</head>
+<body>
+  <div class="quietStage"></div>
+
+  <main class="finalStack" id="finalStack">
+    <section class="finalText">
+      <div>If dreams are more real than reality.</div>
+      <div>Is there any point in waking up?</div>
+    </section>
+    <section class="finalChoices">
+      <button type="button">YES</button>
+      <button type="button">NO</button>
+    </section>
+  </main>
+
+  <div class="recorded" id="recorded">[ RESPONSE RECORDED ]</div>
+
+  <script src="./eye-transition.js"></script>
+  <script src="./david-voice.js"></script>
+  <script>
+    const finalStack = document.getElementById('finalStack');
+    const recorded = document.getElementById('recorded');
+    let returnTimer = null;
+
+    finalStack.addEventListener('click', (event) => {
+      if (!event.target.closest('button')) return;
+      if (returnTimer) return;
+      if (window.DAVIDVoice) window.DAVIDVoice.buzz(0.34, 0.012, 118);
+      document.body.classList.add('responseMode');
+      recorded.classList.add('visible');
+      returnTimer = setTimeout(() => {
+        if (window.goWithEyeTransition) {
+          window.goWithEyeTransition('index.html');
+        } else {
+          window.location.href = 'index.html';
+        }
+      }, 10000);
+    });
+  </script>
+  <script src="./custom-cursor.js"></script>
+</body>
+</html>

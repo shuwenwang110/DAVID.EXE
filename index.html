@@ -1,0 +1,554 @@
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DAVID.EXE | Loading</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      color: #fff;
+      font-family: "Courier New", monospace;
+      user-select: none;
+      cursor: none;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(255,255,255,0.05) 0px,
+          rgba(255,255,255,0.05) 1px,
+          transparent 2px,
+          transparent 5px
+        );
+      opacity: 0.45;
+      mix-blend-mode: screen;
+      z-index: 20;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 18% 22%, rgba(255,255,255,0.09), transparent 2px),
+        radial-gradient(circle at 64% 58%, rgba(255,255,255,0.07), transparent 2px),
+        radial-gradient(circle at 42% 78%, rgba(255,255,255,0.06), transparent 1px);
+      background-size: 80px 80px, 120px 120px, 70px 70px;
+      opacity: 0.55;
+      animation: noiseMove 0.35s steps(2) infinite;
+      z-index: 21;
+    }
+
+    @keyframes noiseMove {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-8px, 5px); }
+      50% { transform: translate(6px, -7px); }
+      75% { transform: translate(10px, 3px); }
+      100% { transform: translate(-4px, 8px); }
+    }
+
+    #screen {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(255,255,255,0.11), transparent 19%),
+        radial-gradient(circle at 50% 50%, #111 0%, #040404 45%, #000 100%);
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 35%, rgba(0,0,0,0.86) 100%);
+      z-index: 15;
+    }
+
+    .glitchLayer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 25;
+      background:
+        linear-gradient(90deg, rgba(255,0,0,0.18), transparent 10%, rgba(0,180,255,0.16) 18%, transparent 26%),
+        repeating-linear-gradient(to bottom, transparent 0px, transparent 11px, rgba(255,255,255,0.18) 12px);
+    }
+
+    .glitchLayer.active {
+      animation: glitchFlash 0.22s steps(2) 1;
+    }
+
+    @keyframes glitchFlash {
+      0% { opacity: 0; transform: translate(0, 0); }
+      20% { opacity: 0.8; transform: translate(12px, -4px); }
+      45% { opacity: 0.35; transform: translate(-16px, 5px); }
+      70% { opacity: 0.65; transform: translate(8px, 2px); }
+      100% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    .bootBox {
+      position: relative;
+      z-index: 10;
+      width: min(760px, calc(100vw - 48px));
+      min-height: 520px;
+      border: 1px solid rgba(255,255,255,0.82);
+      background: rgba(0,0,0,0.72);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.95),
+        0 0 42px rgba(255,255,255,0.12),
+        12px 14px 0 rgba(0,0,0,0.48);
+      padding: 26px;
+      text-shadow: 2px 0 rgba(255,0,0,0.35), -2px 0 rgba(0,180,255,0.35);
+    }
+
+    .topLine {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.6);
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      opacity: 0.88;
+    }
+
+    .eyeWrap {
+      height: 150px;
+      display: grid;
+      place-items: center;
+      margin: 8px 0 18px;
+    }
+
+    .eye {
+      position: relative;
+      width: 230px;
+      height: 82px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      overflow: hidden;
+      transform: scaleY(0.08);
+      animation: eyeOpen 3.3s ease-in-out forwards;
+      box-shadow: 0 0 28px rgba(255,255,255,0.18);
+    }
+
+    @keyframes eyeOpen {
+      0% { transform: scaleY(0.04); opacity: 0; }
+      12% { transform: scaleY(1); opacity: 1; }
+      18% { transform: scaleY(0.08); }
+      24% { transform: scaleY(1); }
+      88% { transform: scaleY(1); }
+      92% { transform: scaleY(0.08); }
+      100% { transform: scaleY(1); }
+    }
+
+    .pupil {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 42px;
+      height: 42px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      background: #000;
+      box-shadow: 0 0 24px rgba(255,255,255,0.24);
+    }
+
+    .pupil::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #fff;
+      transform: translate(-50%, -50%);
+    }
+
+    .systemText {
+      height: 150px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.32);
+      padding: 14px 16px;
+      background: rgba(0,0,0,0.55);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .systemLine {
+      opacity: 0.92;
+      white-space: pre-wrap;
+    }
+
+    .progressArea {
+      margin-top: 22px;
+    }
+
+    .progressMeta {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 9px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      opacity: 0.88;
+    }
+
+    .progressOuter {
+      height: 24px;
+      border: 1px solid #fff;
+      padding: 3px;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .progressInner {
+      width: 0%;
+      height: 100%;
+      background: #fff;
+      transition: width 0.12s linear;
+    }
+
+    .enterArea {
+      margin-top: 26px;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .readyText {
+      font-size: 14px;
+      line-height: 1.6;
+      opacity: 0;
+    }
+
+    .readyText.active {
+      opacity: 1;
+      animation: blinkText 1s steps(2) infinite;
+    }
+
+    @keyframes blinkText {
+      0%, 48% { opacity: 1; }
+      49%, 100% { opacity: 0.25; }
+    }
+
+    .enterButton {
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      padding: 12px 24px;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .enterButton.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .enterButton:hover {
+      background: #fff;
+      color: #000;
+      text-shadow: none;
+    }
+
+    .cornerInfo {
+      position: fixed;
+      left: 22px;
+      top: 18px;
+      z-index: 30;
+      font-size: 11px;
+      line-height: 1.7;
+      opacity: 0.55;
+      letter-spacing: 0.08em;
+      text-shadow: 2px 0 rgba(255,0,0,0.28), -2px 0 rgba(0,180,255,0.28);
+    }
+
+    .warning {
+      color: #fff;
+      animation: warningPulse 0.65s steps(2) infinite;
+    }
+
+    @keyframes warningPulse {
+      0%, 45% { opacity: 1; }
+      46%, 100% { opacity: 0.35; }
+    }
+
+    .shake {
+      animation: boxShake 0.22s steps(2) 1;
+    }
+
+    @keyframes boxShake {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(8px, -3px); }
+      50% { transform: translate(-10px, 4px); }
+      75% { transform: translate(5px, 2px); }
+      100% { transform: translate(0, 0); }
+    }
+@media (max-width: 700px) {
+      .bootBox {
+        min-height: 500px;
+        padding: 20px;
+      }
+
+      .topLine {
+        font-size: 11px;
+      }
+
+      .eye {
+        width: 190px;
+        height: 68px;
+      }
+
+      .systemText {
+        font-size: 12px;
+      }
+
+      .enterArea {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+
+  <!-- Shared DAVID.EXE transition and cursor files -->
+  <link rel="stylesheet" href="./eye-transition.css" />
+  <link rel="stylesheet" href="./custom-cursor.css" />
+</head>
+<body data-eye-mode="close-only">
+  <div class="cornerInfo">
+    DAVID.EXE<br />DREAM READER INTERFACE<br />BUILD 0.98
+  </div>
+
+  <main id="screen">
+    <div class="bootBox" id="bootBox">
+      <div class="topLine">
+        <span>DAVID.EXE</span>
+        <span id="clockText">00:00:00</span>
+      </div>
+
+      <div class="eyeWrap">
+        <div class="eye" id="eye">
+          <div class="pupil"></div>
+        </div>
+      </div>
+
+      <div class="systemText" id="systemText"></div>
+
+      <div class="progressArea">
+        <div class="progressMeta">
+          <span id="loadingLabel">INITIALIZING SYSTEM...</span>
+          <span id="percentText">0%</span>
+        </div>
+        <div class="progressOuter">
+          <div class="progressInner" id="progressInner"></div>
+        </div>
+      </div>
+
+      <div class="enterArea">
+        <div class="readyText" id="readyText">
+          &gt; READY.<br />
+          &gt; CLICK TO ENTER.
+        </div>
+        <a class="enterButton" id="enterButton" href="SCENE03.html" data-eye-link>ENTER DREAM</a>
+      </div>
+    </div>
+  </main>
+
+  <div class="vignette"></div>
+  <div class="glitchLayer" id="glitchLayer"></div>
+  <script src="./eye-transition.js"></script>
+  <script src="./david-voice.js"></script>
+<script>
+  
+  const NEXT_PAGE = 'SCENE03.html';
+
+    const bootBox = document.getElementById('bootBox');
+    const systemText = document.getElementById('systemText');
+    const loadingLabel = document.getElementById('loadingLabel');
+    const percentText = document.getElementById('percentText');
+    const progressInner = document.getElementById('progressInner');
+    const readyText = document.getElementById('readyText');
+    const enterButton = document.getElementById('enterButton');
+    const glitchLayer = document.getElementById('glitchLayer');
+    const clockText = document.getElementById('clockText');
+    const eye = document.getElementById('eye');
+
+    enterButton.href = NEXT_PAGE;
+
+    const bootLines = [
+      '> INITIALIZING DAVID.EXE...',
+      '> CHECKING DREAM SIGNAL...',
+      '> USER CONSCIOUSNESS: DETECTED',
+      '> SLEEP STABILITY: UNSTABLE',
+      '> MEMORY ACCESS: PARTIAL',
+      '> UNKNOWN DREAM FRAGMENT: FOUND',
+      '> DO NOT WAKE THE USER',
+      '> PREPARING INTERFACE...'
+    ];
+
+    const loadingMessages = [
+      'INITIALIZING SYSTEM...',
+      'SCANNING DREAM FILES...',
+      'CALIBRATING SLEEP SIGNAL...',
+      'OPENING USER MEMORY...',
+      'REPAIRING BROKEN DREAM...',
+      'VERIFYING DREAM ACCESS...',
+      'WAITING FOR CONSENT...'
+    ];
+
+    let lineIndex = 0;
+    let percent = 0;
+    let targetPercent = 99;
+    let ready = false;
+    let bounceTimer = null;
+
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      clockText.textContent = `${h}:${m}:${s}`;
+    }
+
+    function addLine(text, warning = false) {
+      const div = document.createElement('div');
+      div.className = warning ? 'systemLine warning' : 'systemLine';
+      div.textContent = text;
+      systemText.appendChild(div);
+      systemText.scrollTop = systemText.scrollHeight;
+    }
+
+    function triggerGlitch() {
+      glitchLayer.classList.remove('active');
+      bootBox.classList.remove('shake');
+      void glitchLayer.offsetWidth;
+      glitchLayer.classList.add('active');
+      bootBox.classList.add('shake');
+      if (window.DAVIDVoice) window.DAVIDVoice.buzz(0.2, 0.01, 156);
+    }
+
+    function runBootText() {
+      if (lineIndex < bootLines.length) {
+        const isWarning = bootLines[lineIndex].includes('UNKNOWN') || bootLines[lineIndex].includes('DO NOT');
+        addLine(bootLines[lineIndex], isWarning);
+        if (isWarning) triggerGlitch();
+        lineIndex++;
+        setTimeout(runBootText, lineIndex === 1 ? 700 : 430 + Math.random() * 350);
+      }
+    }
+
+    function runProgress() {
+      if (ready) return;
+
+      let step;
+      if (percent < 42) step = Math.random() * 6 + 2;
+      else if (percent < 76) step = Math.random() * 4 + 1;
+      else if (percent < 94) step = Math.random() * 2 + 0.5;
+      else step = Math.random() * 0.7 + 0.15;
+
+      percent = Math.min(targetPercent, percent + step);
+      const rounded = Math.floor(percent);
+
+      progressInner.style.width = `${rounded}%`;
+      percentText.textContent = `${rounded}%`;
+
+      const messageIndex = Math.min(
+        loadingMessages.length - 1,
+        Math.floor((rounded / targetPercent) * loadingMessages.length)
+      );
+      loadingLabel.textContent = loadingMessages[messageIndex];
+
+      if (rounded >= 99) {
+        percent = 99;
+        progressInner.style.width = '99%';
+        percentText.textContent = '99%';
+        loadingLabel.textContent = 'SYSTEM READY.';
+        startPercentBounce();
+        setTimeout(showReady, 500);
+      } else {
+        setTimeout(runProgress, 80 + Math.random() * 190);
+      }
+    }
+
+    function startPercentBounce() {
+      if (bounceTimer) return;
+
+      let showHundred = false;
+      bounceTimer = setInterval(() => {
+        showHundred = !showHundred;
+        const value = showHundred ? 100 : 99;
+        progressInner.style.width = `${value}%`;
+        percentText.textContent = `${value}%`;
+        loadingLabel.textContent = value === 100 ? 'SYSTEM READY.' : 'WAITING FOR CONSENT...';
+      }, 420);
+    }
+
+    function showReady() {
+      ready = true;
+      addLine('> READY.', false);
+      addLine('> CLICK TO ENTER.', false);
+      triggerGlitch();
+      eye.classList.add('closed');
+      readyText.classList.add('active');
+      enterButton.classList.add('active');
+    }
+
+    enterButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.goWithEyeTransition) {
+        window.goWithEyeTransition(NEXT_PAGE);
+        return;
+      }
+      document.body.classList.add('closeEye');
+      setTimeout(() => {
+        window.location.href = NEXT_PAGE;
+      }, 900);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (ready) return;
+      const rect = eye.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / window.innerWidth;
+      const dy = (e.clientY - cy) / window.innerHeight;
+      eye.style.transform = `scaleY(1) translate(${dx * 12}px, ${dy * 8}px)`;
+    });
+
+    setInterval(updateClock, 1000);
+    updateClock();
+    setTimeout(runBootText, 850);
+    setTimeout(runProgress, 1150);
+  </script>
+
+
+<script src="./custom-cursor.js"></script>
+
+
+</body>
+</html>

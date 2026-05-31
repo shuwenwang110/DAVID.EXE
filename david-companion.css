@@ -1,0 +1,42 @@
+.davidCompanion {
+  position: fixed;
+  left: 6vw;
+  top: 50%;
+  z-index: 1000;
+  width: min(440px, calc(100vw - 48px));
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.davidCompanionCanvas {
+  display: block;
+  width: 90%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  margin: 0 auto -8px;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.22));
+  pointer-events: none;
+}
+
+.davidCompanion .dialogue {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: 100%;
+  z-index: 1;
+}
+
+@media (max-width: 900px) {
+  .davidCompanion {
+    left: 18px;
+    top: auto;
+    bottom: 16px;
+    width: min(360px, calc(100vw - 36px));
+    transform: none;
+  }
+
+  .davidCompanionCanvas {
+    width: 62%;
+  }
+}

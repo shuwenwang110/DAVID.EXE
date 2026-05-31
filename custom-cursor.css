@@ -1,0 +1,67 @@
+html,
+body,
+button,
+
+[role="button"],
+.clickable,
+.linkButton,
+.enterButton {
+  cursor: none !important;
+}
+
+.custom-cursor-main,
+.custom-cursor-trail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--cursor-size, 42px);
+  height: var(--cursor-size, 42px);
+  background-image: var(--cursor-image);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  pointer-events: none;
+  z-index: 9999999;
+  mix-blend-mode: screen;
+}
+
+.custom-cursor-main {
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.55));
+}
+
+.custom-cursor-trail {
+  opacity: 0.65;
+  animation: cursorGhostFade 0.75s ease-out forwards,
+             cursorGhostFlicker 0.16s steps(2) infinite;
+}
+
+@keyframes cursorGhostFade {
+  0% {
+    opacity: 0.65;
+    transform: translate(var(--x), var(--y)) scale(1) rotate(var(--r));
+  }
+
+  70% {
+    opacity: 0.25;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(0.72) rotate(var(--r));
+  }
+}
+
+@keyframes cursorGhostFlicker {
+  0% {
+    filter: brightness(1) contrast(1);
+  }
+
+  50% {
+    filter: brightness(1.8) contrast(1.6);
+  }
+
+  100% {
+    filter: brightness(0.75) contrast(1.2);
+  }
+}
